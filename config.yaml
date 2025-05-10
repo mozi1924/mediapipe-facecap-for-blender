@@ -10,6 +10,10 @@ smoothing:
   mouth: 0.4
   brows: 0.5
   teeth: 0.4
+  recording:
+    fps: 30
+    output_path: recordings
+    auto_timestamp: True
 calibration:
   file: calibration.json
   ref_points:

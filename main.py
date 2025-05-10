@@ -9,6 +9,7 @@ from utils.face_utils import calculate_features, draw_preview, MODEL_POINTS
 from utils.network import UDPTransmitter
 from models.smoother import FeatureSmoother
 from utils.calibration import save_calibration
+from utils.recording import Recorder
 
 # ----------------------------
 # 参数解析模块
@@ -20,6 +21,9 @@ def parse_args():
     parser.add_argument('--udp_port', type=int, default=12345, help='UDP端口号')
     parser.add_argument('--preview', action='store_true', help='启用实时预览')
     parser.add_argument('--no_smooth', action='store_true', help='禁用平滑')
+    parser.add_argument('--record', action='store_true', help='启用录制到CSV')
+    parser.add_argument('--record_fps', type=float, default=None, help='录制帧率（覆盖配置文件）')
+    parser.add_argument('--record_output', type=str, default=None, help='CSV输出路径（默认根据时间生成）')
     return parser.parse_args()
 
 # ----------------------------
@@ -111,6 +115,12 @@ def main():
     detector = FaceMeshDetector()
     transmitter = UDPTransmitter(args.udp_ip, args.udp_port)
     smoother = FeatureSmoother() if not args.no_smooth else None
+    recorder = None
+    if args.record:
+        recorder = Recorder(
+            output_path=args.record_output,
+            fps=args.record_fps
+        )
 
     last_send = 0
     try:
@@ -135,6 +145,9 @@ def main():
                 transmitter.send(features)
                 last_send = time.time()
 
+            if recorder:
+                recorder.record(features)
+
             # 实时预览
             if args.preview:
                 preview_img = draw_preview(frame.copy(), features)
@@ -142,7 +155,7 @@ def main():
                 if cv2.waitKey(1) & 0xFF == 27:  # ESC退出
                     break
             
-            # main.py的主循环中添加
+            # 校准
             if args.preview:
                 preview_img = draw_preview(frame.copy(), features)
                 cv2.imshow('Preview', preview_img)
@@ -150,7 +163,11 @@ def main():
                 if key == ord('c'):  # 按下C键触发校准
                     save_calibration(features)  # 调用校准函数
 
+                    
+
     finally:
+        if recorder:
+            recorder.close()
         camera.release()
         detector.close()
         transmitter.close()

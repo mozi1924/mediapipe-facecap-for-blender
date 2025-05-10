@@ -23,6 +23,11 @@ DEFAULT_CONFIG = {
         'file': 'calibration.json',
         'ref_points': [33, 263]
     },
+    'recording': {
+        'fps': 30,
+        'output_dir': 'recordings',
+        'auto_timestamp': True
+    },
     'preview': {
         'fps': 30,
         'scale': 0.8
