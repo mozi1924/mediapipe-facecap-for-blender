@@ -1,0 +1,23 @@
+hardware_acceleration:
+  enable: true
+  opencl: true
+  backend: auto
+smoothing:
+  enable: true
+  head: 0.8
+  eyelids: 0.5
+  pupils: 0.8
+  mouth: 0.4
+  brows: 0.5
+  teeth: 0.4
+calibration:
+  file: calibration.json
+  ref_points:
+  - 33
+  - 263
+preview:
+  fps: 30
+  scale: 0.8
+camera:
+  width: 800
+  height: 600
