@@ -12,6 +12,7 @@ sock = None
 is_receiving = False
 udp_thread = None
 data_queue = queue.Queue()
+DEBUG_MAX_LINES = 20  # 最大显示行数
 
 # 骨骼名称映射
 controls = {
@@ -141,8 +142,15 @@ def udp_listener():
             txt = data.decode('utf-8')
             info = json.loads(txt)
             data_queue.put(info)
-        except Exception:
-            continue
+            
+            # 更新调试数据
+            if bpy.context.scene.fpc_debug_show:
+                debug_str = json.dumps(info, indent=2)
+                lines = debug_str.split('\n')[:DEBUG_MAX_LINES]
+                bpy.context.scene.fpc_debug_data = '\n'.join(lines)
+                
+        except Exception as e:
+            print(f"接收错误: {str(e)}")
 
 def start_receiving(ip, port):
     global sock, is_receiving, udp_thread
@@ -216,6 +224,32 @@ class FPC_PT_Panel(bpy.types.Panel):
         else:
             row = layout.row()
             row.operator('fpc.start', icon='PLAY')
+            
+class FPC_PT_DebugPanel(bpy.types.Panel):
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category = 'FaceCapture'
+    bl_label = "调试信息"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    def draw_header(self, context):
+        layout = self.layout
+        layout.prop(context.scene, "fpc_debug_show", text="")
+
+    def draw(self, context):
+        layout = self.layout
+        sc = context.scene
+        
+        if sc.fpc_debug_show:
+            box = layout.box()
+            if sc.fpc_debug_data:
+                lines = sc.fpc_debug_data.split('\n')
+                for line in lines:
+                    row = box.row()
+                    row.alignment = 'LEFT'
+                    row.label(text=line)
+            else:
+                box.label(text="等待数据...", icon='INFO')
 
 # 注册类列表
 classes = (
@@ -223,6 +257,7 @@ classes = (
     FPC_OT_Start,
     FPC_OT_Stop,
     FPC_PT_Panel,
+    FPC_PT_DebugPanel,
 )
 
 def register():
@@ -234,6 +269,15 @@ def register():
         name="UDP 端口", default=UDP_PORT, min=1, max=65535)
     bpy.types.Scene.fpc_receiving = bpy.props.BoolProperty(default=False)
     bpy.app.timers.register(process_data)
+    
+    bpy.types.Scene.fpc_debug_show = bpy.props.BoolProperty(
+        name="显示调试信息",
+        default=False
+    )
+    bpy.types.Scene.fpc_debug_data = bpy.props.StringProperty(
+        name="调试数据",
+        default=""
+    )
 
 def unregister():
     stop_receiving()
@@ -242,6 +286,8 @@ def unregister():
     del bpy.types.Scene.udp_ip
     del bpy.types.Scene.udp_port
     del bpy.types.Scene.fpc_receiving
+    del bpy.types.Scene.fpc_debug_show
+    del bpy.types.Scene.fpc_debug_data
 
 if __name__ == "__main__":
     register()

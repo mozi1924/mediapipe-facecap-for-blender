@@ -103,8 +103,8 @@ def calculate_features(lm, frame_shape):
     ], dtype=np.float64)
 
     camera_matrix = np.array([
-        [w, 0, w/2],
-        [0, w, h/2],
+        [w * 0.9, 0, w/2],
+        [0, w * 0.9, h/2],
         [0, 0, 1]
     ], dtype=np.float64)
 
@@ -119,10 +119,22 @@ def calculate_features(lm, frame_shape):
     # 转换为欧拉角
     rmat = cv2.Rodrigues(rvec)[0]
     euler = rotation_matrix_to_euler(rmat)
+
+    # 头部校准逻辑
+    if not calib.get('head_calibrated'):
+        # 初始化校准（此时euler已计算）
+        calib['head_pitch_offset'] = euler[0]
+        calib['head_yaw_offset'] = euler[1]
+        calib['head_roll_offset'] = euler[2]
+        calib['head_calibrated'] = True
+        # 保存校准数据到文件（可选）
+        with open(CALIB_FILE, 'w') as f:
+            json.dump(calib, f)
     
-    features['head_yaw'] = euler[1] * 0.01   # 调整比例
-    features['head_pitch'] = euler[0] * 0.01
-    features['head_roll'] = euler[2] * 0.01
+    # 应用校准偏移
+    features['head_pitch'] = euler[0] - calib['head_pitch_offset']
+    features['head_yaw'] = euler[1] - calib['head_yaw_offset']
+    features['head_roll'] = euler[2] - calib['head_roll_offset']
 
     # 眉毛抬升
     for side, brow_ids in (('left', LEFT_BROW_IDS), ('right', RIGHT_BROW_IDS)):
@@ -163,28 +175,37 @@ def draw_preview(img, feats):
         bx = int(w*(0.3 if side=='left' else 0.7)); by = h//2
         dx = int(feats[f'{side}_pupil_x']*100); dy = int(feats[f'{side}_pupil_y']*100)
         cv2.arrowedLine(img, (bx, by), (bx+dx, by+dy), (0,255,255), 2)
+    # 头部箭头
+    cv2.putText(img, f"Head Euler: ({feats['head_pitch']:.1f}, {feats['head_yaw']:.1f}, {feats['head_roll']:.1f})",
+                (w-350, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,255,255), 2)
     return img
 
 def rotation_matrix_to_euler(rmat):
+    # 确保旋转矩阵是3x3
+    assert rmat.shape == (3,3), "Invalid rotation matrix shape"
+    
+    # 提取欧拉角（ZYX顺序）
     sy = math.sqrt(rmat[0,0]**2 + rmat[1,0]**2)
     singular = sy < 1e-6
+
     if not singular:
-        x = math.atan2(rmat[2,1], rmat[2,2])
-        y = math.atan2(-rmat[2,0], sy)
-        z = math.atan2(rmat[1,0], rmat[0,0])
+        x = math.atan2(rmat[2,1], rmat[2,2])  # Pitch
+        y = math.atan2(-rmat[2,0], sy)        # Yaw
+        z = math.atan2(rmat[1,0], rmat[0,0])  # Roll
     else:
         x = math.atan2(-rmat[1,2], rmat[1,1])
         y = math.atan2(-rmat[2,0], sy)
         z = 0
+
     return np.degrees([x, y, z])
 
 MODEL_POINTS = np.array([
-    (0.0, 0.0, 0.0),         # 鼻尖 (1)
-    (0.0, -330.0, -65.0),    # 下巴 (152)
-    (-225.0, 170.0, -135.0), # 左眼外角 (33)
-    (225.0, 170.0, -135.0),  # 右眼外角 (263)
-    (-150.0, -150.0, -125.0), # 左嘴角 (61)
-    (150.0, -150.0, -125.0),  # 右嘴角 (291)
-    (-130.0, 75.0, -110.0),   # 左眉中心 (107)
-    (130.0, 75.0, -110.0)     # 右眉中心 (336)
+    (0.0, 0.0, 0.0),         # 鼻尖 (NOSE_TIP)
+    (0.0, -330.0, -65.0),    # 下巴 (CHIN)
+    (-165.0, 170.0, -135.0), # 左眼外角 (LEFT_EYE_OUTER)
+    (165.0, 170.0, -135.0),  # 右眼外角 (RIGHT_EYE_OUTER)
+    (-75.0, -40.0, -125.0),  # 左嘴角 (MOUTH_LEFT)
+    (75.0, -40.0, -125.0),   # 右嘴角 (MOUTH_RIGHT)
+    (-60.0, 130.0, -110.0),  # 左眉中心 (BROW_CENTER_LEFT)
+    (60.0, 130.0, -110.0)    # 右眉中心 (BROW_CENTER_RIGHT)
 ], dtype=np.float64)
