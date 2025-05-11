@@ -1,5 +1,7 @@
 # Mozi's Facemocap for Blender
 
+[中文文档](/README_ZH.md)
+
 ## Introduction
 A MediaPipe-based facial capture program primarily designed for Blender, consisting of a companion Blender addon (referred to as the "receiver") and a transmitter.
 
