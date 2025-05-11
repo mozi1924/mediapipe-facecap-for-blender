@@ -17,20 +17,20 @@ class Recorder:
         
         # 添加文件打开状态检查
         if not self._init_csv():
-            raise RuntimeError("无法创建录制文件")
+            raise RuntimeError("Unable to create recording file")
 
     def _resolve_output_path(self, user_path):
-        """增强路径处理逻辑"""
+        """Enhanced path processing logic"""
         try:
             if user_path:
                 path = Path(user_path)
-                if path.suffix == '':  # 用户指定的是目录
+                if path.suffix == '':  # The user specifies a directory
                     path.mkdir(parents=True, exist_ok=True)
                     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
                     return path / f"recording_{timestamp}.csv"
                 return path
             
-            # 处理默认路径
+            # Handling default paths
             default_dir = Path(CONFIG['recording'].get('output_dir', 'recordings'))
             default_dir.mkdir(parents=True, exist_ok=True)
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -39,7 +39,7 @@ class Recorder:
             raise RuntimeError(f"路径解析失败: {str(e)}")
 
     def _init_csv(self):
-        """增强文件初始化逻辑"""
+        """Enhanced file initialization logic"""
         try:
             self.file = open(self.output_path, 'w', newline='')
             self.writer = csv.writer(self.file)
@@ -54,14 +54,14 @@ class Recorder:
             self.writer.writerow(headers)
             return True
         except IOError as e:
-            print(f"文件创建失败: {str(e)}")
+            print(f"File creation failed: {str(e)}")
             return False
         except Exception as e:
-            print(f"初始化异常: {str(e)}")
+            print(f"Initialization Exception: {str(e)}")
             return False
 
     def record(self, features):
-        """添加空值保护"""
+        """Adding null protection"""
         if not self.writer:
             return
             
@@ -88,10 +88,10 @@ class Recorder:
             self.writer.writerow(row)
             self.last_write = current_time
         except Exception as e:
-            print(f"写入失败: {str(e)}")
+            print(f"Write failed: {str(e)}")
 
     def close(self):
-        """安全关闭"""
+        """Safety Shutdown"""
         if self.file and not self.file.closed:
             self.file.close()
             self.writer = None

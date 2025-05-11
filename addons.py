@@ -7,7 +7,7 @@ from mathutils import Vector
 from bpy.types import Operator, Panel
 from bpy.props import StringProperty, IntProperty, BoolProperty, PointerProperty
 
-# 全局配置
+# Global Configuration
 UDP_IP = '127.0.0.1'
 UDP_PORT = 12345
 sock = None
@@ -18,23 +18,23 @@ DEBUG_MAX_LINES = 20
 BASE_ARMATURE_NAME = "FaceCapture_Rig"
 
 controls = {
-    'mouth':        'Mouth',
-    'left_eyelid':  'LeftEyelid',
-    'right_eyelid': 'RightEyelid',
-    'left_pupil':   'LeftPupil',
-    'right_pupil':  'RightPupil',
-    'left_brow':    'LeftBrow',
-    'right_brow':   'RightBrow',
-    'head':         'Head',
-    'teeth':        'Teeth'
+    'mouth':        'MFC_Mouth',
+    'left_eyelid':  'MFC_LeftEyelid',
+    'right_eyelid': 'MFC_RightEyelid',
+    'left_pupil':   'MFC_LeftPupil',
+    'right_pupil':  'MFC_RightPupil',
+    'left_brow':    'MFC_LeftBrow',
+    'right_brow':   'MFC_RightBrow',
+    'head':         'MFC_Head',
+    'teeth':        'MFC_Teeth'
 }
 
 PUPIL_MOVE_RANGE = 0.1
 
 def get_armature(context, create_new=False):
-    """获取或创建骨架（支持自动命名）"""
+    """Get or create a skeleton (supports automatic naming)"""
     if create_new:
-        # 创建新骨架并进入编辑模式
+        # Create a new skeleton and enter edit mode
         armature_data = bpy.data.armatures.new(BASE_ARMATURE_NAME)
         armature_obj = bpy.data.objects.new(BASE_ARMATURE_NAME, armature_data)
         context.collection.objects.link(armature_obj)
@@ -42,12 +42,12 @@ def get_armature(context, create_new=False):
         context.view_layer.objects.active = armature_obj
         bpy.ops.object.mode_set(mode='EDIT')
         
-        # 创建根骨骼
+        # Creating the Root Bone
         root_bone = armature_data.edit_bones.new("Root")
         root_bone.head = Vector((0, 0, 0))
         root_bone.tail = Vector((0, 0, 0.2))
         
-        # 创建控制骨骼
+        # Creating Control Bones
         for index, (control_type, bone_name) in enumerate(controls.items()):
             new_bone = armature_data.edit_bones.new(bone_name)
             x_offset = index * 0.3
@@ -58,11 +58,11 @@ def get_armature(context, create_new=False):
         bpy.ops.object.mode_set(mode='OBJECT')
         return armature_obj
     
-    # 返回当前选择的骨架
+    # Returns the currently selected skeleton
     return context.scene.fpc_active_armature
 
 def get_pose_bone(armature, bone_name):
-    """获取姿态骨骼"""
+    """Get the pose skeleton"""
     if armature and bone_name in armature.pose.bones:
         return armature.pose.bones[bone_name]
     return None
@@ -77,7 +77,7 @@ def process_data():
         try:
             info = data_queue.get_nowait()
             
-            # 1. 嘴巴控制
+            # 1. Mouth control
             mouth = get_pose_bone(armature, controls['mouth'])
             if mouth:
                 mouth.scale[0] = 1.0 + info.get('mouth_width', 0.0)
@@ -85,7 +85,7 @@ def process_data():
                 if auto_key:
                     mouth.keyframe_insert(data_path='scale', frame=frame)
 
-            # 2. 眼皮控制
+            # 2. Eyelid control
             for side in ('left', 'right'):
                 eyelid = get_pose_bone(armature, controls[f'{side}_eyelid'])
                 if eyelid:
@@ -93,7 +93,7 @@ def process_data():
                     if auto_key:
                         eyelid.keyframe_insert(data_path='scale', frame=frame)
 
-            # 3. 瞳孔控制
+            # 3. Pupil control
             for side in ('left', 'right'):
                 pupil = get_pose_bone(armature, controls[f'{side}_pupil'])
                 if pupil:
@@ -103,7 +103,7 @@ def process_data():
                     if auto_key:
                         pupil.keyframe_insert(data_path='location', frame=frame)
 
-            # 4. 眉毛控制
+            # 4. Eyebrow control
             for side in ('left', 'right'):
                 brow = get_pose_bone(armature, controls[f'{side}_brow'])
                 if brow:
@@ -111,7 +111,7 @@ def process_data():
                     if auto_key:
                         brow.keyframe_insert(data_path='scale', frame=frame)
 
-            # 5. 头部控制
+            # 5. Head Control
             head = get_pose_bone(armature, controls['head'])
             if head:
                 head.rotation_euler = (
@@ -122,7 +122,7 @@ def process_data():
                 if auto_key:
                     head.keyframe_insert(data_path='rotation_euler', frame=frame)
 
-            # 6. 牙齿控制
+            # 6. Teeth Control
             teeth = get_pose_bone(armature, controls['teeth'])
             if teeth:
                 teeth.scale[2] = info.get('teeth_open', 0.0)
@@ -130,7 +130,7 @@ def process_data():
                     teeth.keyframe_insert(data_path='scale', frame=frame)
 
         except Exception as e:
-            print(f"处理数据时出错: {str(e)}")
+            print(f"Error processing data: {str(e)}")
     
     return 0.02
 
@@ -149,7 +149,7 @@ def udp_listener():
                 bpy.context.scene.fpc_debug_data = '\n'.join(lines)
                 
         except Exception as e:
-            print(f"接收错误: {str(e)}")
+            print(f"Receiving Error: {str(e)}")
 
 def start_receiving(ip, port):
     global sock, is_receiving, udp_thread
@@ -170,40 +170,40 @@ def stop_receiving():
 
 class FPC_OT_CreateControls(bpy.types.Operator):
     bl_idname = "fpc.create_controls"
-    bl_label = "创建新面部控制骨架"
+    bl_label = "Creating a New Facial Control Skeleton"
 
     def execute(self, context):
         new_armature = get_armature(context, create_new=True)
         context.scene.fpc_active_armature = new_armature
-        self.report({'INFO'}, f"已创建骨架 {new_armature.name}")
+        self.report({'INFO'}, f"Skeleton created {new_armature.name}")
         return {'FINISHED'}
 
 class FPC_OT_Start(bpy.types.Operator):
     bl_idname = "fpc.start"
-    bl_label = "开始接收数据"
+    bl_label = "Start receiving data"
 
     def execute(self, context):
         sc = context.scene
         start_receiving(sc.udp_ip, sc.udp_port)
         sc.fpc_receiving = True
-        self.report({'INFO'}, "已启动 UDP 接收")
+        self.report({'INFO'}, "UDP receive started")
         return {'FINISHED'}
 
 class FPC_OT_Stop(bpy.types.Operator):
     bl_idname = "fpc.stop"
-    bl_label = "停止接收"
+    bl_label = "Stop receiving"
 
     def execute(self, context):
         stop_receiving()
         context.scene.fpc_receiving = False
-        self.report({'INFO'}, "已停止 UDP 接收")
+        self.report({'INFO'}, "UDP reception stopped")
         return {'FINISHED'}
 
 class FPC_PT_Panel(bpy.types.Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     bl_category = 'FaceCapture'
-    bl_label = '面部捕捉'
+    bl_label = 'Facial capture'
 
     def draw(self, context):
         sc = context.scene
@@ -211,7 +211,7 @@ class FPC_PT_Panel(bpy.types.Panel):
         
         # 骨架选择
         layout.prop_search(sc, "fpc_active_armature", sc, "objects", 
-                          text="当前骨架", icon='ARMATURE_DATA')
+                          text="Current Skeleton", icon='ARMATURE_DATA')
         layout.operator('fpc.create_controls', icon='ADD')
         
         # UDP控制
@@ -228,7 +228,7 @@ class FPC_PT_DebugPanel(bpy.types.Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     bl_category = 'FaceCapture'
-    bl_label = "调试信息"
+    bl_label = "Debug Information"
     bl_options = {'DEFAULT_CLOSED'}
 
     def draw_header(self, context):
@@ -248,7 +248,7 @@ class FPC_PT_DebugPanel(bpy.types.Panel):
                     row.alignment = 'LEFT'
                     row.label(text=line)
             else:
-                box.label(text="等待数据...", icon='INFO')
+                box.label(text="Waiting for data...", icon='INFO')
 
 classes = (
     FPC_OT_CreateControls,
@@ -265,7 +265,7 @@ def register():
     bpy.types.Scene.udp_ip = StringProperty(
         name="UDP IP", default=UDP_IP)
     bpy.types.Scene.udp_port = IntProperty(
-        name="UDP 端口", default=UDP_PORT, min=1, max=65535)
+        name="UDP Port", default=UDP_PORT, min=1, max=65535)
     bpy.types.Scene.fpc_receiving = BoolProperty(default=False)
     bpy.types.Scene.fpc_active_armature = PointerProperty(
         name="Active Armature",
@@ -273,11 +273,11 @@ def register():
         poll=lambda self, obj: obj.type == 'ARMATURE'
     )
     bpy.types.Scene.fpc_debug_show = BoolProperty(
-        name="显示调试信息",
+        name="Display debug information",
         default=False
     )
     bpy.types.Scene.fpc_debug_data = StringProperty(
-        name="调试数据",
+        name="Debug Data",
         default=""
     )
     bpy.app.timers.register(process_data)

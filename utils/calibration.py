@@ -3,7 +3,7 @@ from pathlib import Path
 from config.settings import CONFIG
 
 def save_calibration(features):
-    """保存当前特征值为基准值"""
+    """Save the current feature value as the reference value"""
     calib_data = {
         'mouth_width': features.get('mouth_width', 0),
         'brow_left': features.get('left_brow', 0),
@@ -14,4 +14,4 @@ def save_calibration(features):
     calib_file = Path(CONFIG['calibration']['file'])
     with open(calib_file, 'w') as f:
         json.dump(calib_data, f, indent=2)
-    print(f"[校准完成] 基准值已保存至 {calib_file}")
+    print(f"[Calibration Completed] Reference values ​​have been saved to {calib_file}")

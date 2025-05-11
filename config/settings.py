@@ -2,7 +2,7 @@ import os
 import yaml
 from pathlib import Path
 
-CONFIG_FILE = 'config.yaml'  # 新增这一行
+CONFIG_FILE = 'config.yaml'
 
 DEFAULT_CONFIG = {
     'hardware_acceleration': {
