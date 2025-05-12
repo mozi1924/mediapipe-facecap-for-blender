@@ -5,7 +5,7 @@ import time
 import numpy as np
 from pathlib import Path
 from config.settings import CONFIG
-from utils.face_utils import calculate_features, draw_preview, MODEL_POINTS
+from models.face_utils import calculate_features, draw_preview, MODEL_POINTS
 from utils.network import UDPTransmitter
 from models.smoother import FeatureSmoother
 from utils.calibration import save_calibration
