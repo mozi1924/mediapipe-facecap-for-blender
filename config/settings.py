@@ -23,6 +23,10 @@ DEFAULT_CONFIG = {
         'file': 'calibration.json',
         'ref_points': [33, 263]
     },
+    'head_calibration': {
+        'file': 'head_calibration.json',
+        'calib_points': [1, 9, 57, 130, 287, 359]
+    },
     'recording': {
         'fps': 30,
         'output_dir': 'recordings',

@@ -109,6 +109,8 @@ def main():
                 key = cv2.waitKey(1) & 0xFF
                 if key == ord('c'):  # Press the C key to trigger calibration
                     save_calibration(features)  # Call the calibration function
+                    
+                    
 
 
     finally:

@@ -3,20 +3,8 @@ import math
 
 class HeadRotationCalculator:
     def __init__(self, config):
-        self.calib_file = config['calibration']['file']
-        self.calib = self._load_calibration()
-        self.ref_points = config['calibration']['ref_points']
-
-    def _load_calibration(self):
-        try:
-            with open(self.calib_file, 'r') as f:
-                return json.load(f)
-        except (FileNotFoundError, json.JSONDecodeError):
-            return {}
-
-    def _save_calibration(self):
-        with open(self.calib_file, 'w') as f:
-            json.dump(self.calib, f)
+        # 移除校准文件相关初始化
+        pass  # 完全不需要config参数，但为保持接口兼容性保留构造参数
 
     def calculate_head_rotation(self, lm, frame_shape, features):
         features.setdefault('head_pitch', 0.0)
@@ -31,11 +19,11 @@ class HeadRotationCalculator:
                 return features
                 
             euler = self._solve_head_pose(image_points, w, h)
-        
-            if not self.calib.get('head_calibrated'):
-                self._initialize_calibration(euler)
             
-            self._apply_calibration(euler, features)
+            # 直接赋值，不再应用校准
+            features['head_pitch'] = -euler[0]  # 保持符号反转
+            features['head_yaw'] = -euler[1]
+            features['head_roll'] = euler[2]
         
         except Exception as e:
             print(f"Head rotation calculation failed: {str(e)}")
@@ -46,7 +34,8 @@ class HeadRotationCalculator:
         return features
 
     def _get_image_points(self, lm, w, h):
-        required_indices = [1, 9, 57, 130, 287, 359]  # 使用更稳定的面部特征点
+        # 保持不变
+        required_indices = [1, 9, 57, 130, 287, 359]
         
         image_points = []
         for idx in required_indices:
@@ -57,6 +46,7 @@ class HeadRotationCalculator:
         return np.array(image_points, dtype=np.float64)
 
     def _solve_head_pose(self, image_points, w, h):
+        # 保持不变
         if MODEL_POINTS.shape[0] != image_points.shape[0]:
             raise ValueError(f"3D/2D points mismatch: {MODEL_POINTS.shape[0]} vs {image_points.shape[0]}")
 
@@ -79,21 +69,8 @@ class HeadRotationCalculator:
         return self._rotation_matrix_to_euler(rotation_matrix)
 
     def _rotation_matrix_to_euler(self, rotation_matrix):
+        # 保持符号反转逻辑
         x = math.atan2(rotation_matrix[2, 1], rotation_matrix[2, 2])
         y = math.atan2(-rotation_matrix[2, 0], math.sqrt(rotation_matrix[0, 0]**2 + rotation_matrix[1, 0]**2))
         z = math.atan2(rotation_matrix[1, 0], rotation_matrix[0, 0])
-        return np.degrees([-x, -y, z])
-
-    def _initialize_calibration(self, euler):
-        self.calib.update({
-            'head_pitch_offset': euler[0],
-            'head_yaw_offset': euler[1],
-            'head_roll_offset': euler[2],
-            'head_calibrated': True
-        })
-        self._save_calibration()
-
-    def _apply_calibration(self, euler, features):
-        features['head_pitch'] = euler[0] - self.calib.get('head_pitch_offset', 0)
-        features['head_yaw'] = euler[1] - self.calib.get('head_yaw_offset', 0)
-        features['head_roll'] = euler[2] - self.calib.get('head_roll_offset', 0)
+        return np.degrees([x, y, z])

@@ -60,7 +60,6 @@ MODEL_POINTS = np.array([
 ], dtype=np.float64)
 
 # 加载校准
-CALIB_FILE = CONFIG['calibration']['file']
 if Path(CALIB_FILE).exists():
     with open(CALIB_FILE, 'r') as f:
         calib = json.load(f)
