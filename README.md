@@ -30,6 +30,9 @@ python main.py --preview --input 1
 ```
 Modify arguments as needed.
 
+## Shortcut key
+Currently only one, press `C` to calibrate the face
+
 ## Parameters
 ```bash
 [mozi@navi]~/mediapipe-realtime-face/app-next% python main.py --help             

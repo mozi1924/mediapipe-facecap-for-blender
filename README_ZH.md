@@ -28,6 +28,9 @@ python main.py --preview --input 1
 ```
 可能需要根据实际情况进行修改
 
+## 快捷键
+目前只有一个，点击`C`进行校准面部
+
 ## 参数
 ```
 [mozi@navi]~/mediapipe-realtime-face/app-next% python main.py --help             

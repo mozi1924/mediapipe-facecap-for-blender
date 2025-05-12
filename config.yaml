@@ -4,7 +4,7 @@ hardware_acceleration:
   backend: auto
 smoothing:
   enable: true
-  head: 0.8
+  head: 0.4
   eyelids: 0.5
   pupils: 0.8
   mouth: 0.4
