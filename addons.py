@@ -1,4 +1,5 @@
 import bpy
+import math
 import socket
 import json
 import threading
@@ -114,11 +115,11 @@ def process_data():
             # 5. Head Control
             head = get_pose_bone(armature, controls['head'])
             if head:
-                head.rotation_euler = (
-                    info.get('head_pitch', 0.0),
-                    info.get('head_yaw', 0.0),
-                    info.get('head_roll', 0.0)
-                )
+                head.rotation_mode = 'XYZ'
+                pitch = math.radians(info.get('head_pitch', 0.0))
+                yaw   = math.radians(info.get('head_yaw',   0.0))
+                roll  = math.radians(info.get('head_roll',  0.0))
+                head.rotation_euler = (pitch, yaw, roll)
                 if auto_key:
                     head.keyframe_insert(data_path='rotation_euler', frame=frame)
 

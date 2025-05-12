@@ -1,6 +1,1 @@
-{
-  "mouth_width": 0.579,
-  "brow_left": 1.823,
-  "brow_right": 1.636,
-  "teeth_open": 0.0
-}
+{"mouth_width": 0.0, "brow_left": 0.0, "brow_right": 0.0, "teeth_open": 0.0, "head_pitch_offset": -7.504466274256169, "head_yaw_offset": 17.94194044062618, "head_roll_offset": -2.1325557786801013, "head_calibrated": true}
