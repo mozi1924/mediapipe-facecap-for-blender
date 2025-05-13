@@ -58,9 +58,19 @@ options:
 ## Receiver
 Please read [addons.md](/addons.md)
 
+## Don't know how to use it?
+Try my example rig [example](/example/)
+
+You will quickly understand the principles and become familiar with
+
+Have fun :)
+
 ## License
 GPL-3.0
 
 ## Contact
 Email: mozi1924@arasaka.ltd  
 BiliBili: https://space.bilibili.com/434156493
+
+## Thanks
+Helped me solve the big problem of head rotation https://github.com/shenasa-ai/head-pose-estimation

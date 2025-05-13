@@ -1,0 +1,1 @@
+This is my original character. I will release it as an example of this software under the GPL-3.0 agreement. You need to comply with the license when using it and need to attribution to me.
