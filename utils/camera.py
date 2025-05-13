@@ -57,6 +57,7 @@ class CameraManager:
     def read_frame(self):
         ok, frame = self.cap.read()
         return cv2.flip(frame, 1) if ok else None
+        #return frame if ok else None
 
     def release(self):
         if self.cap and self.cap.isOpened():

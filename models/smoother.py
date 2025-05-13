@@ -7,14 +7,14 @@ class FeatureSmoother:
         
     def apply(self, features):
         if not self.factors['enable']:
-            return {k: round(v, 3) for k, v in features.items()}  # 保持输出精度
-        
+            return features  # 直接返回原始值
+            
         output = {}
         for key, val in features.items():
-            # 输入精度处理（接收四位小数）
-            val = round(float(val), 4)
+            # 移除输入精度处理，直接转为浮点数
+            val = float(val)
             
-            # 获取平滑因子
+            # 获取平滑因子（保持原有逻辑不变）
             if 'pupil' in key:
                 alpha = self.factors['pupils']
             elif key.endswith('_eyelid'):
@@ -30,17 +30,14 @@ class FeatureSmoother:
             else:
                 alpha = 0.5
                 
-            # 获取历史值（自动处理初始状态）
-            prev = self.smoothed.get(key, round(val, 4))
+            # 获取历史值（使用原始精度）
+            prev = self.smoothed.get(key, val)
             
             # 执行平滑计算
             smoothed_val = alpha * prev + (1 - alpha) * val
             
-            # 输出精度处理（保留三位小数）
-            output_val = round(smoothed_val, 3)
-            
-            # 更新存储值（保持四位精度用于下次计算）
-            self.smoothed[key] = round(smoothed_val, 4)
-            output[key] = output_val
+            # 更新存储值和输出值（保持原始精度）
+            self.smoothed[key] = smoothed_val
+            output[key] = smoothed_val
             
         return output

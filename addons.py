@@ -30,6 +30,16 @@ controls = {
     'teeth':        'MFC_Teeth'
 }
 
+# 新增部位分组列表
+control_groups = [
+    ('right_brow', 'left_brow'),
+    ('right_eyelid', 'left_eyelid'),
+    ('right_pupil', 'left_pupil'),
+    ('mouth',),
+    ('teeth',),
+    ('head',)
+]
+
 PUPIL_MOVE_RANGE = 0.1
 
 def get_armature(context, create_new=False):
@@ -79,56 +89,62 @@ def process_data():
             info = data_queue.get_nowait()
             
             # 1. Mouth control
-            mouth = get_pose_bone(armature, controls['mouth'])
-            if mouth:
-                mouth.scale[0] = 1.0 + info.get('mouth_width', 0.0)
-                mouth.scale[2] = info.get('mouth_open', 0.0)
-                if auto_key:
-                    mouth.keyframe_insert(data_path='scale', frame=frame)
+            if sc.fpc_enable_mouth:
+                mouth = get_pose_bone(armature, controls['mouth'])
+                if mouth:
+                    mouth.scale[0] = 1.0 + info.get('mouth_width', 0.0)
+                    mouth.scale[2] = info.get('mouth_open', 0.0)
+                    if auto_key:
+                        mouth.keyframe_insert(data_path='scale', frame=frame)
 
             # 2. Eyelid control
             for side in ('left', 'right'):
-                eyelid = get_pose_bone(armature, controls[f'{side}_eyelid'])
-                if eyelid:
-                    eyelid.scale[2] = info.get(f'{side}_eyelid', 0.0)
-                    if auto_key:
-                        eyelid.keyframe_insert(data_path='scale', frame=frame)
+                if getattr(sc, f'fpc_enable_{side}_eyelid'):
+                    eyelid = get_pose_bone(armature, controls[f'{side}_eyelid'])
+                    if eyelid:
+                        eyelid.scale[2] = info.get(f'{side}_eyelid', 0.0)
+                        if auto_key:
+                            eyelid.keyframe_insert(data_path='scale', frame=frame)
 
             # 3. Pupil control
             for side in ('left', 'right'):
-                pupil = get_pose_bone(armature, controls[f'{side}_pupil'])
-                if pupil:
-                    x = max(min(info.get(f'{side}_pupil_x', 0.0), PUPIL_MOVE_RANGE), -PUPIL_MOVE_RANGE)
-                    y = max(min(info.get(f'{side}_pupil_y', 0.0), PUPIL_MOVE_RANGE), -PUPIL_MOVE_RANGE)
-                    pupil.location = (x, y, 0)
-                    if auto_key:
-                        pupil.keyframe_insert(data_path='location', frame=frame)
+                if getattr(sc, f'fpc_enable_{side}_pupil'):
+                    pupil = get_pose_bone(armature, controls[f'{side}_pupil'])
+                    if pupil:
+                        x = max(min(info.get(f'{side}_pupil_x', 0.0), PUPIL_MOVE_RANGE), -PUPIL_MOVE_RANGE)
+                        y = max(min(info.get(f'{side}_pupil_y', 0.0), PUPIL_MOVE_RANGE), -PUPIL_MOVE_RANGE)
+                        pupil.location = (x, y, 0)
+                        if auto_key:
+                            pupil.keyframe_insert(data_path='location', frame=frame)
 
             # 4. Eyebrow control
             for side in ('left', 'right'):
-                brow = get_pose_bone(armature, controls[f'{side}_brow'])
-                if brow:
-                    brow.scale[2] = 1.0 + info.get(f'{side}_brow', 0.0)
-                    if auto_key:
-                        brow.keyframe_insert(data_path='scale', frame=frame)
+                if getattr(sc, f'fpc_enable_{side}_brow'):
+                    brow = get_pose_bone(armature, controls[f'{side}_brow'])
+                    if brow:
+                        brow.scale[2] = 1.0 + info.get(f'{side}_brow', 0.0)
+                        if auto_key:
+                            brow.keyframe_insert(data_path='scale', frame=frame)
 
             # 5. Head Control
-            head = get_pose_bone(armature, controls['head'])
-            if head:
-                head.rotation_mode = 'XYZ'
-                pitch = math.radians(info.get('head_pitch', 0.0))
-                yaw   = math.radians(info.get('head_yaw',   0.0))
-                roll  = math.radians(info.get('head_roll',  0.0))
-                head.rotation_euler = (pitch, yaw, roll)
-                if auto_key:
-                    head.keyframe_insert(data_path='rotation_euler', frame=frame)
+            if sc.fpc_enable_head:
+                head = get_pose_bone(armature, controls['head'])
+                if head:
+                    head.rotation_mode = 'XYZ'
+                    pitch = math.radians(info.get('head_pitch', 0.0))
+                    yaw   = math.radians(info.get('head_yaw',   0.0))
+                    roll  = math.radians(info.get('head_roll',  0.0))
+                    head.rotation_euler = (pitch, yaw, roll)
+                    if auto_key:
+                        head.keyframe_insert(data_path='rotation_euler', frame=frame)
 
             # 6. Teeth Control
-            teeth = get_pose_bone(armature, controls['teeth'])
-            if teeth:
-                teeth.scale[2] = info.get('teeth_open', 0.0)
-                if auto_key:
-                    teeth.keyframe_insert(data_path='scale', frame=frame)
+            if sc.fpc_enable_teeth:
+                teeth = get_pose_bone(armature, controls['teeth'])
+                if teeth:
+                    teeth.scale[2] = info.get('teeth_open', 0.0)
+                    if auto_key:
+                        teeth.keyframe_insert(data_path='scale', frame=frame)
 
         except Exception as e:
             print(f"Error processing data: {str(e)}")
@@ -225,6 +241,27 @@ class FPC_PT_Panel(bpy.types.Panel):
         else:
             layout.operator('fpc.start', icon='PLAY')
 
+# 新增控制面板
+class FPC_PT_ControlPanel(bpy.types.Panel):
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category = 'FaceCapture'
+    bl_label = 'Control Settings'
+    bl_order = 1  # 确保在主面板之下，debug面板之上
+    
+    def draw(self, context):
+        sc = context.scene
+        layout = self.layout
+        
+        for group in control_groups:
+            row = layout.row()
+            for control in group:
+                if control in controls:
+                    prop_name = f'fpc_enable_{control}'
+                    row.prop(sc, prop_name, 
+                            text=control.replace('_', ' ').title(),
+                            toggle=True)
+
 class FPC_PT_DebugPanel(bpy.types.Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
@@ -256,6 +293,7 @@ classes = (
     FPC_OT_Start,
     FPC_OT_Stop,
     FPC_PT_Panel,
+    FPC_PT_ControlPanel,  # 新增面板
     FPC_PT_DebugPanel,
 )
 
@@ -281,6 +319,26 @@ def register():
         name="Debug Data",
         default=""
     )
+    
+    # 添加启用属性
+    control_props = {
+        'mouth': True,
+        'teeth': True,
+        'head': True,
+        'left_eyelid': True,
+        'right_eyelid': True,
+        'left_brow': True,
+        'right_brow': True,
+        'left_pupil': True,
+        'right_pupil': True,
+    }
+    
+    # 正确的属性注册方式
+    for prop, default in control_props.items():
+        setattr(bpy.types.Scene, f'fpc_enable_{prop}', 
+               BoolProperty(name=prop.replace('_', ' ').title(), 
+               default=default))
+    
     bpy.app.timers.register(process_data)
 
 def unregister():
@@ -293,6 +351,16 @@ def unregister():
     del bpy.types.Scene.fpc_active_armature
     del bpy.types.Scene.fpc_debug_show
     del bpy.types.Scene.fpc_debug_data
+    
+    # 删除启用属性
+    control_props = ['mouth', 'teeth', 'head', 
+                   'left_eyelid', 'right_eyelid',
+                   'left_brow', 'right_brow',
+                   'left_pupil', 'right_pupil']
+    
+    for prop in control_props:
+        if f'fpc_enable_{prop}' in bpy.types.Scene.__annotations__:
+            del bpy.types.Scene.__annotations__[f'fpc_enable_{prop}']
 
 if __name__ == "__main__":
     register()
