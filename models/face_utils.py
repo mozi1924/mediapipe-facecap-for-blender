@@ -1,12 +1,67 @@
-from pathlib import Path
 from face_constants import *
-from .head_rotation import HeadRotationCalculator
 
-# Loading the Head Rotation Calculator
+class HeadRotationCalculator:
+    def __init__(self, config):
+        self.config = config
+        self.calib_points = config['head_calibration']['calib_points']
+        try:
+            with open(config['head_calibration']['file'], 'r') as f:
+                self.head_calib = json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError):
+            self.head_calib = {'pitch':0, 'yaw':0, 'roll':0}
+
+    def calculate_head_rotation(self, lm, frame_shape, features):
+        try:
+            h, w = frame_shape[:2]
+            image_points = self._get_image_points(lm, w, h)
+            if image_points is None: return features
+            
+            euler = self._solve_head_pose(image_points, w, h)
+            features['head_pitch'] = -(euler[0] - self.head_calib['pitch'])
+            features['head_yaw'] = -(euler[1] - self.head_calib['yaw'])
+            features['head_roll'] = euler[2] - self.head_calib['roll']
+        except Exception as e:
+            print(f"Head rotation error: {str(e)}")
+            features.update({'head_pitch':0, 'head_yaw':0, 'head_roll':0})
+        return features
+
+    def _get_image_points(self, lm, w, h):
+        image_points = []
+        for idx in self.calib_points:
+            if idx >= len(lm) or not hasattr(lm[idx], 'x'):
+                return None
+            image_points.append([lm[idx].x * w, lm[idx].y * h])
+        return np.array(image_points, dtype=np.float64)
+
+    def _solve_head_pose(self, image_points, w, h):
+        if MODEL_POINTS.shape[0] != image_points.shape[0]:
+            raise ValueError("3D/2D points mismatch")
+        
+        camera_matrix = np.array([
+            [w, 0, w/2],
+            [0, w, h/2],
+            [0, 0, 1]
+        ], dtype=np.float64)
+        
+        _, rvec, _ = cv2.solvePnP(
+            MODEL_POINTS,
+            image_points,
+            camera_matrix,
+            np.zeros((4, 1), dtype=np.float64),
+            flags=cv2.SOLVEPNP_ITERATIVE
+        )
+        return self._rotation_matrix_to_euler(cv2.Rodrigues(rvec)[0])
+
+    def _rotation_matrix_to_euler(self, R):
+        x = math.atan2(R[2,1], R[2,2])
+        y = math.atan2(-R[2,0], math.hypot(R[0,0], R[1,0]))
+        z = math.atan2(R[1,0], R[0,0])
+        return np.degrees([x, y, z])
+
+# 初始化模块级组件
 head_rotator = HeadRotationCalculator(CONFIG)
 
 def calculate_features(lm, frame_shape):
-    h, w = frame_shape[:2]
     features = {}
     h, w = frame_shape[:2]
     
@@ -84,6 +139,16 @@ def calculate_features(lm, frame_shape):
     features = head_rotator.calculate_head_rotation(lm, frame_shape, features)
     
     return features
+
+def save_head_calibration(features):
+    calib_data = {
+        'pitch': features['head_pitch'],
+        'yaw': features['head_yaw'],
+        'roll': features['head_roll']
+    }
+    with open(CONFIG['head_calibration']['file'], 'w') as f:
+        json.dump(calib_data, f)
+    print(f"Head calibration saved to {CONFIG['head_calibration']['file']}")
 
 def draw_preview(img, feats):
     y = 30

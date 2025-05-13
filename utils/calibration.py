@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 from config.settings import CONFIG
+from models.face_utils import save_head_calibration
 
 def save_calibration(features):
     """Save the current feature value as the reference value"""
@@ -11,6 +12,8 @@ def save_calibration(features):
         'teeth_open': features.get('teeth_open', 0)
     }
     
+    save_head_calibration(features)
+
     calib_file = Path(CONFIG['calibration']['file'])
     with open(calib_file, 'w') as f:
         json.dump(calib_data, f, indent=2)
