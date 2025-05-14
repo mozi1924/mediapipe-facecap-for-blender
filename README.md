@@ -14,7 +14,46 @@ It converts facial data into simple transformations (e.g., movement, scaling) fo
 - CSV recording support in the transmitter
 - Headless mode (runs without a GUI)
 
-## Installation
+## Usage
+Download the version appropriate for your operating system from the releases page
+
+Then create the `_internal/mediapipe/modules` folder
+
+Unzip modules.zip into it
+
+tree
+```
+~/myapp/main/_internal/mediapipe/modules$ tree
+.
+├── face_detection
+│   ├── face_detection_full_range_cpu.binarypb
+│   ├── face_detection_full_range_sparse.tflite
+│   ├── face_detection_pb2.py
+│   ├── face_detection_short_range_cpu.binarypb
+│   └── face_detection_short_range.tflite
+├── face_geometry
+│   ├── data
+│   │   └── __init__.py
+│   ├── effect_renderer_calculator_pb2.py
+│   ├── env_generator_calculator_pb2.py
+│   ├── geometry_pipeline_calculator_pb2.py
+│   ├── __init__.py
+│   ├── libs
+│   │   └── __init__.py
+│   └── protos
+│       ├── environment_pb2.py
+│       ├── face_geometry_pb2.py
+│       ├── geometry_pipeline_metadata_pb2.py
+│       ├── __init__.py
+│       └── mesh_3d_pb2.py
+└── face_landmark
+    ├── face_landmark_front_cpu.binarypb
+    ├── face_landmark.tflite
+    ├── face_landmark_with_attention.tflite
+    └── __init__.py
+```
+
+## Manual Installation
 Python 3.12 is recommended.
 ```bash
 git clone https://github.com/mozi1924/mediapipe-facecap-for-blender.git
@@ -24,7 +63,6 @@ python -m venv venv
 pip install mediapipe numpy pyyaml
 ```
 
-## Usage
 ```bash
 python main.py --preview --input 1
 ```
