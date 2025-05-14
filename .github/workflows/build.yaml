@@ -45,13 +45,7 @@ jobs:
 
     - name: Build executable
       run: |
-        pyinstaller -D -c -w \
-          --name FaceCap_${{ env.VERSION }} \
-          --add-data "config.yaml:." \
-          --add-data "README.md:." \
-          --hidden-import mediapipe \
-          --hidden-import yaml \
-          main.py
+        pyinstaller -D -c -w main.py
 
     - name: Package artifacts
       uses: thedoctor0/zip-release@0.7.5
