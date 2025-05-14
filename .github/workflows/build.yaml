@@ -30,18 +30,18 @@ jobs:
 
     - name: Install core dependencies
       run: |
-        pip install pyinstaller numpy pyyaml
-        # 显式安装 mediapipe 但不打包其资源
-        pip install --no-deps mediapipe
+        pip install pyinstaller numpy pyyaml mediapipe
 
     - name: Generate version info
       id: version
+      shell: bash  # 强制使用 bash shell
       run: |
         if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
-          echo "VERSION=${{ inputs.semver }}-${{ inputs.release_type }}" >> $GITHUB_ENV
+          echo "VERSION=${{ github.event.inputs.semver }}-${{ github.event.inputs.release_type }}" >> $GITHUB_ENV
         else
           echo "VERSION=canary-$(git rev-parse --short HEAD)" >> $GITHUB_ENV
         fi
+        echo "Generated version: $VERSION"
 
     - name: Build executable
       run: |
