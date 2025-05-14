@@ -1,0 +1,108 @@
+name: Build and Release
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Release Type (beta/release)'
+        required: true
+        default: 'beta'
+      semver:
+        description: 'Semantic Version (e.g. 1.0.0)'
+        required: true
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+
+    - name: Get version info
+      id: version
+      run: |
+        if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+          echo "VERSION=${{ inputs.semver }}-${{ inputs.release_type }}" >> $GITHUB_ENV
+        else
+          echo "VERSION=canary-$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+        fi
+        echo "Using version: $VERSION"
+
+    - name: Install dependencies
+      run: |
+        pip install pyinstaller mediapipe numpy pyyaml
+        echo "MEDIAPIPE_PATH=$(python -c 'import mediapipe, os; print(os.path.dirname(mediapipe.__file__))')" >> $GITHUB_ENV
+
+    - name: Configure data paths
+      run: |
+        if [ "$RUNNER_OS" == "Windows" ]; then
+          SEPARATOR=";"
+          DEST_PREFIX="mediapipe\\modules"
+        else
+          SEPARATOR=":"
+          DEST_PREFIX="mediapipe/modules"
+        fi
+
+        MODULES=("face_landmark" "face_detection" "face_geometry")
+        DATA_ARGS=""
+        for module in "${MODULES[@]}"; do
+          DATA_ARGS+="--add-data \"$MEDIAPIPE_PATH/modules/$module/*.binarypb$SEPARATOR$DEST_PREFIX/$module\" "
+        done
+        echo "DATA_ARGS=$DATA_ARGS" >> $GITHUB_ENV
+
+    - name: Build with PyInstaller
+      run: |
+        pyinstaller -D -c -w \
+          --name "FaceCap_${{ env.VERSION }}" \
+          ${{ env.DATA_ARGS }} \
+          --hidden-import mediapipe.tasks.python.vision \
+          --hidden-import yaml \
+          main.py
+
+    - name: Package artifacts
+      uses: thedoctor0/zip-release@0.7.5
+      with:
+        type: 'zip'
+        filename: FaceCap_${{ env.VERSION }}_${{ runner.os }}.zip
+        path: dist/
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: FaceCap_${{ env.VERSION }}_${{ runner.os }}
+        path: FaceCap_${{ env.VERSION }}_${{ runner.os }}.zip
+
+  release:
+    needs: [build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - name: Download artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts
+
+    - name: Create release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ needs.build.outputs.version }}
+        name: FaceCap ${{ needs.build.outputs.version }}
+        body: |
+          Automated build containing:
+          - Windows x64 build
+          - Linux x64 build
+        files: |
+          artifacts/**/*.zip
