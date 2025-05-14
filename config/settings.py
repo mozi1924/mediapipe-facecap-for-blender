@@ -1,4 +1,3 @@
-import os
 import yaml
 from pathlib import Path
 
@@ -6,8 +5,8 @@ CONFIG_FILE = 'config.yaml'
 
 DEFAULT_CONFIG = {
     'hardware_acceleration': {
-        'enable': False,
-        'opencl': False,
+        'enable': True,
+        'opencl': True,
         'backend': 'auto'
     },
     'smoothing': {

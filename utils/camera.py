@@ -5,7 +5,38 @@ class CameraManager:
     def __init__(self, source):
         self.source = source
         self.cap = None
+        self._init_opencl()  # 新增OpenCL初始化
         self._init_camera()
+
+    def _init_opencl(self):
+        if CONFIG['hardware_acceleration']['enable']:
+            if cv2.ocl.haveOpenCL():
+                cv2.ocl.setUseOpenCL(True)
+                print("OpenCL acceleration enabled")
+            else:
+                print("OpenCL not available, using CPU")
+                CONFIG['hardware_acceleration']['enable'] = False
+
+    def _get_backend(self):
+        import platform
+        system = platform.system()
+        backend_map = {
+            'Windows': {
+                'auto': cv2.CAP_DSHOW,
+                'msmf': cv2.CAP_MSMF,
+                'dshow': cv2.CAP_DSHOW
+            },
+            'Linux': {
+                'auto': cv2.CAP_V4L2,
+                'v4l2': cv2.CAP_V4L2
+            },
+            'Darwin': {
+                'auto': cv2.CAP_AVFOUNDATION,
+                'avfoundation': cv2.CAP_AVFOUNDATION
+            }
+        }
+        selected = CONFIG['hardware_acceleration'].get('backend', 'auto')
+        return backend_map[system].get(selected, backend_map[system]['auto'])
 
     def _init_camera(self):
         """Automatic camera detection logic"""

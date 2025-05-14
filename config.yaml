@@ -1,9 +1,9 @@
 hardware_acceleration:
-  enable: true
-  opencl: true
+  enable: True
+  opencl: True
   backend: auto
 smoothing:
-  enable: true
+  enable: True
   head: 0.7
   eyelids: 0.5
   pupils: 0.8
