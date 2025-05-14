@@ -41,6 +41,10 @@ jobs:
         fi
         echo "Generated version: $VERSION"
 
+    - name: Install core dependencies
+      run: |
+        pip install pyinstaller numpy pyyaml mediapipe
+
     - name: Build executable
       run: |
         pyinstaller -D -c -w main.py
