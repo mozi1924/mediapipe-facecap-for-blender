@@ -108,14 +108,14 @@ def main():
 
             # Live Preview
             if args.preview:
-                preview_img = draw_preview(frame.copy(), features)
+                preview_img = draw_preview(frame.copy(), features,lm)
                 cv2.imshow('Preview', preview_img)
                 if cv2.waitKey(1) & 0xFF == 27:  # ESC
                     break
             
             # calibration
             if args.preview:
-                preview_img = draw_preview(frame.copy(), features)
+                preview_img = draw_preview(frame.copy(), features,lm)
                 cv2.imshow('Preview', preview_img)
                 key = cv2.waitKey(1) & 0xFF
                 if key == ord('c'):  # Press the C key to trigger calibration
