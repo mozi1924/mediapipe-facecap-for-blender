@@ -90,24 +90,28 @@ def calculate_features(lm, frame_shape):
             outer = lm[LEFT_EYE_OUTER]
             up = lm[LEFT_EYE_UP[0]]
             down = lm[LEFT_EYE_DOWN[0]]
-            pupil = lm[LEFT_PUPIL]
+            pupil_ids = LEFT_PUPIL_IDS  # 使用环形关键点
         else:
             inner = lm[RIGHT_EYE_INNER]
             outer = lm[RIGHT_EYE_OUTER]
             up = lm[RIGHT_EYE_UP[0]]
             down = lm[RIGHT_EYE_DOWN[0]]
-            pupil = lm[RIGHT_PUPIL]
+            pupil_ids = RIGHT_PUPIL_IDS  # 使用环形关键点
+        
+        # 计算瞳孔中心（取环形关键点平均值）
+        pupil_x_avg = sum(lm[i].x for i in pupil_ids) / len(pupil_ids)
+        pupil_y_avg = sum(lm[i].y for i in pupil_ids) / len(pupil_ids)
         
         eye_width = outer.x - inner.x
         eye_height = down.y - up.y
         
-        # Preventing division by zero errors
+        # 防止除零错误
         if abs(eye_width) < 1e-4: eye_width = 1e-4
         if abs(eye_height) < 1e-4: eye_height = 1e-4
         
-        # Normalized pupil position (center is 0 point)
-        features[f'{side}_pupil_x'] = ((pupil.x - inner.x) / eye_width - 0.5) * 0.1
-        features[f'{side}_pupil_y'] = ((pupil.y - up.y) / eye_height - 0.5) * 0.1
+        # 归一化瞳孔位置（中心为0点）
+        features[f'{side}_pupil_x'] = ((pupil_x_avg - inner.x) / eye_width - 0.5) * 0.1
+        features[f'{side}_pupil_y'] = ((pupil_y_avg - up.y) / eye_height - 0.5) * 0.1
 
     # Eyebrow lift
     for side, brow_ids in (('left', LEFT_BROW_IDS), ('right', RIGHT_BROW_IDS)):

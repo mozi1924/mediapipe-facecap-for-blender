@@ -61,14 +61,14 @@ jobs:
       uses: thedoctor0/zip-release@0.7.5
       with:
         type: 'zip'
-        filename: FaceCap_${{ needs.version.outputs.version }}_${{ runner.os }}.zip
+        filename: Mozi_s_Facemocap_${{ needs.version.outputs.version }}_${{ runner.os }}.zip
         path: dist/
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: FaceCap_${{ needs.version.outputs.version }}_${{ runner.os }}
-        path: FaceCap_${{ needs.version.outputs.version }}_${{ runner.os }}.zip
+        name: Mozi_s_Facemocap_${{ needs.version.outputs.version }}_${{ runner.os }}
+        path: Mozi_s_Facemocap_${{ needs.version.outputs.version }}_${{ runner.os }}.zip
 
   release:
     needs: [version, build]
@@ -86,7 +86,7 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         tag_name: ${{ needs.version.outputs.tag }}
-        name: FaceCap ${{ needs.version.outputs.version }}
+        name: Mozi's FacemoCap ${{ needs.version.outputs.version }}
         generate_release_notes: true
         files: |
           artifacts/**/*.zip
