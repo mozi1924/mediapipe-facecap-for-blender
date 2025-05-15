@@ -19,6 +19,7 @@ from bpy.types import Operator, Panel
 from bpy.props import StringProperty, IntProperty, BoolProperty, PointerProperty
 
 # Global Configuration
+category = "Mozi's FaceCapture"
 UDP_IP = '127.0.0.1'
 UDP_PORT = 12345
 sock = None
@@ -229,7 +230,7 @@ class FPC_OT_Stop(bpy.types.Operator):
 class FPC_PT_Panel(bpy.types.Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
-    bl_category = "Mozi's FaceCapture"
+    bl_category = category
     bl_label = 'Facial capture'
 
     def draw(self, context):
@@ -255,7 +256,7 @@ class FPC_PT_Panel(bpy.types.Panel):
 class FPC_PT_ControlPanel(bpy.types.Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
-    bl_category = 'FaceCapture'
+    bl_category = category
     bl_label = 'Control Settings'
     bl_order = 1  # 确保在主面板之下，debug面板之上
     
@@ -275,7 +276,7 @@ class FPC_PT_ControlPanel(bpy.types.Panel):
 class FPC_PT_DebugPanel(bpy.types.Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
-    bl_category = 'FaceCapture'
+    bl_category = category
     bl_label = "Debug Information"
     bl_options = {'DEFAULT_CLOSED'}
 
