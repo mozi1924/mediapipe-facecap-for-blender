@@ -1,7 +1,4 @@
 from face_constants import *
-import mediapipe as mp
-mp_face_mesh = mp.solutions.face_mesh
-FACE_CONNECTIONS = mp_face_mesh.FACEMESH_TESSELATION
 
 class HeadRotationCalculator:
     def __init__(self, config):
@@ -66,7 +63,7 @@ head_rotator = HeadRotationCalculator(CONFIG)
 
 def calculate_features(lm, frame_shape):
     features = {}
-    h, w = frame_shape[:2]
+    raw_features = {}
     
     # Mouth width calculation
     ref = math.hypot(lm[LEFT_EYE_OUTER].x - lm[RIGHT_EYE_OUTER].x,
@@ -75,6 +72,7 @@ def calculate_features(lm, frame_shape):
                         lm[LEFT_LIP_CORNER].y - lm[RIGHT_LIP_CORNER].y) / ref
     base_mw = calib.get('mouth_width', raw_mw)
     features['mouth_width'] = raw_mw - base_mw
+    raw_features['_raw_mouth_width'] = raw_mw  # 原始值存到raw_features
 
     # Mouth opening and closing
     mouth_open = max((lm[LIPS_DOWN[0]].y - lm[LIPS_UP[0]].y) * 5, 0)
@@ -122,6 +120,7 @@ def calculate_features(lm, frame_shape):
         raw_brow = (lm[NOSE_TIP].y - brow_y) * 10
         base_b = calib.get(f'brow_{side}', raw_brow)
         features[f'{side}_brow'] = raw_brow - base_b
+        raw_features[f'_raw_{side}_brow'] = raw_brow
 
     # tooth opening and closing
     nose_tip = lm[NOSE_TIP]
@@ -141,11 +140,13 @@ def calculate_features(lm, frame_shape):
     raw_teeth = max((vertical_dist - lower_lip_dist) / ref_distance * 5, 0)
     base_teeth = calib.get('teeth_open', raw_teeth)
     features['teeth_open'] = max(raw_teeth - base_teeth, 0)
+    raw_features['_raw_teeth_open'] = raw_teeth
 
     # Calculating head rotation
     features = head_rotator.calculate_head_rotation(lm, frame_shape, features)
     
-    return features
+    # 返回前移除所有_raw_字段，确保不泄露
+    return features, raw_features
 
 def save_head_calibration(features):
     calib_data = {
@@ -163,20 +164,9 @@ def draw_preview(img, feats, lm):  # 添加 lm 参数
         cv2.putText(img, f"{k}: {v:.2f}", (10, y), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,255,0), 2)
         y += 25
     
-    # 绘制面部网格
-    h, w = img.shape[:2]
-    for connection in FACE_CONNECTIONS:
-        start_idx, end_idx = connection
-        if start_idx < len(lm) and end_idx < len(lm):
-            x1 = int(lm[start_idx].x * w)
-            y1 = int(lm[start_idx].y * h)
-            x2 = int(lm[end_idx].x * w)
-            y2 = int(lm[end_idx].y * h)
-            cv2.line(img, (x1, y1), (x2, y2), (100, 100, 100), 1)
-    
     # 定义左右眼和眉毛的关键点索引集合
-    LEFT_POINTS = set(LEFT_PUPIL_IDS + LEFT_EYE_UP + LEFT_EYE_DOWN + LEFT_BROW_IDS)
-    RIGHT_POINTS = set(RIGHT_PUPIL_IDS + RIGHT_EYE_UP + RIGHT_EYE_DOWN + RIGHT_BROW_IDS)
+    LEFT_POINTS = set(LEFT_PUPIL_IDS + LEFT_EYE_UP + LEFT_EYE_DOWN)
+    RIGHT_POINTS = set(RIGHT_PUPIL_IDS + RIGHT_EYE_UP + RIGHT_EYE_DOWN)
 
     # 绘制关键点（可选）
     h, w = img.shape[:2]

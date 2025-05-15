@@ -92,7 +92,7 @@ def main():
 
             # Calculate features
             lm = res.multi_face_landmarks[0].landmark
-            features = calculate_features(lm, frame.shape)
+            features, raw_features = calculate_features(lm, frame.shape)
 
             # Smoothing
             if smoother:
@@ -102,7 +102,6 @@ def main():
             if time.time() - last_send > 1/CONFIG['preview']['fps']:
                 transmitter.send(features)
                 last_send = time.time()
-
             if recorder:
                 recorder.record(features)
 
@@ -119,7 +118,7 @@ def main():
                 cv2.imshow('Preview', preview_img)
                 key = cv2.waitKey(1) & 0xFF
                 if key == ord('c'):  # Press the C key to trigger calibration
-                    save_calibration(features)  # Call the calibration function
+                    save_calibration(raw_features)  # Call the calibration function
                     
     finally:
         if recorder:

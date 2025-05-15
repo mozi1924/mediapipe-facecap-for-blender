@@ -61,7 +61,10 @@ MODEL_POINTS = np.array([
 
 # 加载校准
 if Path(CALIB_FILE).exists():
-    with open(CALIB_FILE, 'r') as f:
-        calib = json.load(f)
+    try:
+        with open(CALIB_FILE, 'r') as f:
+            calib = json.load(f)
+    except (json.JSONDecodeError, IOError):
+        calib = {}
 else:
     calib = {}
