@@ -1,3 +1,13 @@
+bl_info = {
+    "name": "Mozi's Facemocap(receiver)",
+    "author": "Mozi,DeepSeek and You",
+    "version": (0, 11),
+    "blender": (4, 2, 0),
+    "location": "View3D > Sidebar > Mozi's FaceCapture",
+    "description": "Converting facial expressions to controller data",
+    "category": "Animation",
+}
+
 import bpy
 import math
 import socket
@@ -219,7 +229,7 @@ class FPC_OT_Stop(bpy.types.Operator):
 class FPC_PT_Panel(bpy.types.Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
-    bl_category = 'FaceCapture'
+    bl_category = "Mozi's FaceCapture"
     bl_label = 'Facial capture'
 
     def draw(self, context):
