@@ -92,33 +92,29 @@ def main():
 
             # Calculate features
             lm = res.multi_face_landmarks[0].landmark
-            features, raw_features = calculate_features(lm, frame.shape)
+            features_clean, raw_features = calculate_features(lm, frame.shape)
 
             # Smoothing
             if smoother:
-                features = smoother.apply(features)
+                features_clean = smoother.apply(features_clean)  # 使用 features_clean
 
             # Send data at configured FPS
             if time.time() - last_send > 1/CONFIG['preview']['fps']:
-                transmitter.send(features)
+                transmitter.send(features_clean)
                 last_send = time.time()
+
             if recorder:
-                recorder.record(features)
+                recorder.record(features_clean)  # 使用 features_clean
 
             # Live Preview
             if args.preview:
-                preview_img = draw_preview(frame.copy(), features,lm)
+                preview_img = draw_preview(frame.copy(), features_clean, lm)  # 使用 features_clean
                 cv2.imshow('Preview', preview_img)
-                if cv2.waitKey(1) & 0xFF == 27:  # ESC
+                key = cv2.waitKey(1)
+                if key == 27:  # ESC
                     break
-            
-            # calibration
-            if args.preview:
-                preview_img = draw_preview(frame.copy(), features,lm)
-                cv2.imshow('Preview', preview_img)
-                key = cv2.waitKey(1) & 0xFF
-                if key == ord('c'):  # Press the C key to trigger calibration
-                    save_calibration(raw_features)  # Call the calibration function
+                elif key == ord('c'):  # 校准触发
+                    save_calibration(raw_features)
                     
     finally:
         if recorder:

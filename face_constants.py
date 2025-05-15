@@ -9,7 +9,19 @@ from config.settings import CONFIG
 # --------------------------
 # 全局配置
 # --------------------------
+def _load_calib(file_path):
+    """通用校准文件加载函数"""
+    try:
+        with open(file_path, 'r') as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError, IOError):
+        return {}
+
+# 加载面部和头部校准文件
 CALIB_FILE = CONFIG['calibration']['file']
+HEAD_CALIB_FILE = CONFIG['head_calibration']['file']
+calib = _load_calib(CALIB_FILE)
+head_calib = _load_calib(HEAD_CALIB_FILE)
 
 # --------------------------
 # 面部关键点定义
@@ -58,13 +70,3 @@ MODEL_POINTS = np.array([
     [360, 574, 128],
     [391, 425, 108]
 ], dtype=np.float64)
-
-# 加载校准
-if Path(CALIB_FILE).exists():
-    try:
-        with open(CALIB_FILE, 'r') as f:
-            calib = json.load(f)
-    except (json.JSONDecodeError, IOError):
-        calib = {}
-else:
-    calib = {}
