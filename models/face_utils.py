@@ -4,14 +4,15 @@ class HeadRotationCalculator:
     def __init__(self, config):
         self.config = config
         self.calib_points = config['head_calibration']['calib_points']
+        # 移除初始化时加载校准文件的代码
+
+    def calculate_head_rotation(self, lm, frame_shape, features, raw_features):
         try:
-            with open(config['head_calibration']['file'], 'r') as f:
-                self.head_calib = json.load(f)
-        except (FileNotFoundError, json.JSONDecodeError):
-            self.head_calib = {'pitch':0, 'yaw':0, 'roll':0}
+            # --------------------------
+            # 动态获取最新头部校准数据
+            # --------------------------
+            head_calib = get_head_calib()  # 从 face_constants 导入的实时校准函数
             
-    def calculate_head_rotation(self, lm, frame_shape, features, raw_features):  # 新增 raw_features 参数
-        try:
             h, w = frame_shape[:2]
             image_points = self._get_image_points(lm, w, h)
             if image_points is None: return features, raw_features
@@ -21,12 +22,14 @@ class HeadRotationCalculator:
             raw_head_yaw = -euler[1]
             raw_head_roll = euler[2]
             
-            # 校准后的特征值
-            features['head_pitch'] = raw_head_pitch - self.head_calib['pitch']
-            features['head_yaw'] = raw_head_yaw - self.head_calib['yaw']
-            features['head_roll'] = raw_head_roll - self.head_calib['roll']
+            # --------------------------
+            # 使用动态校准值
+            # --------------------------
+            features['head_pitch'] = raw_head_pitch - head_calib.get('pitch', 0)
+            features['head_yaw'] = raw_head_yaw - head_calib.get('yaw', 0)
+            features['head_roll'] = raw_head_roll - head_calib.get('roll', 0)
             
-            # 将原始值添加到 raw_features
+            # 原始值存储
             raw_features['_raw_head_pitch'] = raw_head_pitch
             raw_features['_raw_head_yaw'] = raw_head_yaw
             raw_features['_raw_head_roll'] = raw_head_roll
@@ -34,7 +37,7 @@ class HeadRotationCalculator:
         except Exception as e:
             print(f"Head rotation error: {str(e)}")
             features.update({'head_pitch':0, 'head_yaw':0, 'head_roll':0})
-        return features, raw_features  # 返回更新后的 features 和 raw_features
+        return features, raw_features
 
     def _get_image_points(self, lm, w, h):
         image_points = []
@@ -78,7 +81,7 @@ def calculate_mouth_features(lm, features, raw_features):
                      lm[LEFT_EYE_OUTER].y - lm[RIGHT_EYE_OUTER].y)
     raw_mw = math.hypot(lm[LEFT_LIP_CORNER].x - lm[RIGHT_LIP_CORNER].x,
                         lm[LEFT_LIP_CORNER].y - lm[RIGHT_LIP_CORNER].y) / ref
-    base_mw = calib.get('mouth_width', raw_mw)
+    base_mw = get_calib().get('mouth_width', raw_mw)
     features['mouth_width'] = raw_mw - base_mw
     raw_features['_raw_mouth_width'] = raw_mw  # 原始值存到raw_features
 
@@ -132,7 +135,7 @@ def calculate_eyebrow_features(lm, features, raw_features):
     for side, brow_ids in (('left', LEFT_BROW_IDS), ('right', RIGHT_BROW_IDS)):
         brow_y = sum(lm[i].y for i in brow_ids)/len(brow_ids)
         raw_brow = (lm[NOSE_TIP].y - brow_y) * 10
-        base_b = calib.get(f'brow_{side}', raw_brow)
+        base_b = get_calib().get(f'brow_{side}', raw_brow)
         features[f'{side}_brow'] = raw_brow - base_b
         raw_features[f'_raw_{side}_brow'] = raw_brow
         
@@ -155,7 +158,7 @@ def calculate_teeth_features(lm, features, raw_features):
     
     # 计算归一化的牙齿开合度
     raw_teeth = max((vertical_dist - lower_lip_dist) / ref_distance * 5, 0)
-    base_teeth = calib.get('teeth_open', raw_teeth)
+    base_teeth = get_calib().get('teeth_open', raw_teeth)
     features['teeth_open'] = max(raw_teeth - base_teeth, 0)
     raw_features['_raw_teeth_open'] = raw_teeth
     

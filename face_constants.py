@@ -16,13 +16,17 @@ def _load_calib(file_path):
             return json.load(f)
     except (FileNotFoundError, json.JSONDecodeError, IOError):
         return {}
+def get_calib():
+    """实时获取面部校准数据"""
+    return _load_calib(CALIB_FILE)
+
+def get_head_calib():
+    """实时获取头部校准数据"""
+    return _load_calib(HEAD_CALIB_FILE)
 
 # 加载面部和头部校准文件
 CALIB_FILE = CONFIG['calibration']['file']
 HEAD_CALIB_FILE = CONFIG['head_calibration']['file']
-calib = _load_calib(CALIB_FILE)
-head_calib = _load_calib(HEAD_CALIB_FILE)
-
 # --------------------------
 # 面部关键点定义
 # --------------------------
