@@ -36,8 +36,9 @@ DEFAULT_CONFIG = {
         'scale': 0.8
     },
     'camera': {
-        'width': 1280,
-        'height': 720
+        'width': 'auto',
+        'height': 'auto',
+        'preferred_format': 'MJPG'
     }
 }
 

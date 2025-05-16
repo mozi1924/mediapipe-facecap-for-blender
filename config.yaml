@@ -1,7 +1,7 @@
 hardware_acceleration:
   enable: True
   opencl: True
-  backend: auto
+  backend: v4l2
 smoothing:
   enable: True
   head: 0.7
@@ -23,5 +23,6 @@ preview:
   fps: 30
   scale: 0.8
 camera:
-  width: 800
-  height: 600
+  width: auto
+  height: auto
+  preferred_format: MJPG  # 优先尝试的格式（MJPG/YUYV等）
