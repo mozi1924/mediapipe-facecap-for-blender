@@ -55,7 +55,7 @@ jobs:
 
     - name: Build executable
       run: |
-        pyinstaller -D -c -w main.py
+        pyinstaller -D main.py
 
     - name: Package artifacts
       uses: thedoctor0/zip-release@0.7.5
