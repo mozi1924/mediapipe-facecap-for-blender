@@ -25,11 +25,37 @@ Download the version appropriate for your operating system from the [releases pa
 **Folder Structure**:  
 ```
 ~/myapp/main/_internal/mediapipe/modules$ tree
-...
+.
+├── face_detection
+│   ├── face_detection_full_range_cpu.binarypb
+│   ├── face_detection_full_range_sparse.tflite
+│   ├── face_detection_pb2.py
+│   ├── face_detection_short_range_cpu.binarypb
+│   └── face_detection_short_range.tflite
+├── face_geometry
+│   ├── data
+│   │   └── __init__.py
+│   ├── effect_renderer_calculator_pb2.py
+│   ├── env_generator_calculator_pb2.py
+│   ├── geometry_pipeline_calculator_pb2.py
+│   ├── __init__.py
+│   ├── libs
+│   │   └── __init__.py
+│   └── protos
+│       ├── environment_pb2.py
+│       ├── face_geometry_pb2.py
+│       ├── geometry_pipeline_metadata_pb2.py
+│       ├── __init__.py
+│       └── mesh_3d_pb2.py
+└── face_landmark
+    ├── face_landmark_front_cpu.binarypb
+    ├── face_landmark.tflite
+    ├── face_landmark_with_attention.tflite
+    └── __init__.py
 ```  
 
 ### Windows Users Note  
-**Note: Headless mode does not work properly under Windows**
+**Note: Headless mode may not work properly under Windows**
 On Windows, you **must** specify the `--udp_ip` parameter with a valid IP address (e.g., `127.0.0.1` for localhost), as `0.0.0.0` is not supported. Example:  
 ```bash
 .\main.exe --preview --input 1 --udp_ip 127.0.0.1
