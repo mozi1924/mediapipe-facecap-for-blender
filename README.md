@@ -55,7 +55,7 @@ Download the version appropriate for your operating system from the [releases pa
 ```  
 
 ### Windows Users Note  
-**Note: Headless mode does not work properly under Windows**
+**Note: Headless mode may not work properly under Windows**
 On Windows, you **must** specify the `--udp_ip` parameter with a valid IP address (e.g., `127.0.0.1` for localhost), as `0.0.0.0` is not supported. Example:  
 ```bash
 .\main.exe --preview --input 1 --udp_ip 127.0.0.1
