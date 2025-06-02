@@ -15,9 +15,9 @@ class Recorder:
         self.file = None
         self.writer = None
         
-        # 添加文件打开状态检查
-        if not self._init_csv():
-            raise RuntimeError("Unable to create recording file")
+        # 初始化时立即创建文件
+        self._init_csv()
+        self.recording_start_time = time.time()
 
     def _resolve_output_path(self, user_path):
         """Enhanced path processing logic"""
@@ -52,6 +52,7 @@ class Recorder:
                 'right_pupil_x', 'right_pupil_y'
             ]
             self.writer.writerow(headers)
+            print(f"Recording started: {self.output_path}")
             return True
         except IOError as e:
             print(f"File creation failed: {str(e)}")
@@ -70,7 +71,7 @@ class Recorder:
             return
         
         try:
-            elapsed = round(current_time - self.start_time, 3)
+            elapsed = round(current_time - self.recording_start_time, 3)
             row = [
                 elapsed,
                 features.get('head_pitch', 0),
@@ -95,3 +96,4 @@ class Recorder:
         if self.file and not self.file.closed:
             self.file.close()
             self.writer = None
+            print(f"Recording saved: {self.output_path}")

@@ -20,7 +20,6 @@ def parse_args():
     parser.add_argument('--udp_port', type=int, default=12345, help='UDP port')
     parser.add_argument('--preview', action='store_true', help='Enable Live Preview')
     parser.add_argument('--no_smooth', action='store_true', help='Disable Smoothing')
-    parser.add_argument('--record', action='store_true', help='Enable CSV Recording')
     parser.add_argument('--record_fps', type=float, default=None, help='Override recording FPS')
     parser.add_argument('--camera_config', type=str, default=None, help='Custom camera config file')
     return parser.parse_args()
@@ -56,6 +55,7 @@ def main():
     args = parse_args()
     
     camera, detector, transmitter, smoother, recorder = None, None, None, None, None
+    recording = False  # 新增录制状态标志
     
     try:
         camera = CameraManager(args.input)
@@ -64,8 +64,6 @@ def main():
         
         if not args.no_smooth:
             smoother = FeatureSmoother()
-        if args.record:
-            recorder = Recorder(args.record_output, args.record_fps)
         
         print(f"Camera initialized: {camera.width}x{camera.height}")
         
@@ -96,11 +94,13 @@ def main():
                 transmitter.send(features)
                 last_send = current_time
 
-            if recorder:
+            # 录制处理 - 如果正在录制则记录数据
+            if recording and recorder:
                 recorder.record(features)
 
             if args.preview:
-                preview_img = draw_preview(frame.copy(), features, lm)
+                preview_img = frame.copy()
+                preview_img = draw_preview(preview_img, features, lm)
                 
                 frame_counter += 1
                 elapsed = time.time() - start_time
@@ -112,6 +112,11 @@ def main():
                     frame_counter = 0
                     start_time = time.time()
                 
+                # 显示录制状态
+                if recording:
+                    cv2.putText(preview_img, "REC", (10, 30), 
+                              cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+                
                 cv2.imshow('Preview', preview_img)
                 key = cv2.waitKey(1)
                 if key == 27:  # ESC
@@ -120,13 +125,26 @@ def main():
                     save_calibration(raw_features)
                 elif key == ord('h'):  # 头部校准
                     save_head_calibration(raw_features)
+                elif key == ord('r'):  # 录制开关
+                    if not recording:
+                        # 开始录制
+                        recorder = Recorder(fps=args.record_fps)
+                        recording = True
+                        print("Recording started")
+                    else:
+                        # 停止录制
+                        recording = False
+                        recorder.close()
+                        recorder = None
+                        print("Recording stopped")
     
     except Exception as e:
         print(f"Fatal error: {str(e)}")
         traceback.print_exc()
     
     finally:
-        if recorder:
+        # 确保录制被正确关闭
+        if recording and recorder:
             recorder.close()
         if transmitter:
             transmitter.close()
