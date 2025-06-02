@@ -60,7 +60,7 @@ class CameraManager:
                 self.cap = self._try_open_source(detected_source, backend)
             
         if not self.cap.isOpened():
-            raise RuntimeError(f"无法打开视频源: {self.source}")
+            raise RuntimeError(f"Unable to open video source: {self.source}")
 
         # 初始分辨率设置（后续会被覆盖）
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
@@ -71,12 +71,12 @@ class CameraManager:
         # 1. 尝试首选视频格式
         preferred_format = CONFIG['camera'].get('preferred_format', 'MJPG')
         if self._try_set_format(preferred_format):
-            print(f"成功设置首选格式: {preferred_format}")
+            print(f"Successfully set the preferred format: {preferred_format}")
         else:
-            print(f"无法设置首选格式 {preferred_format}，尝试其他格式...")
+            print(f"Unable to set preferred format {preferred_format}，Try a different format...")
             for fmt in ['YUYV', 'H264', 'NV12', 'YV12']:
                 if self._try_set_format(fmt):
-                    print(f"回退使用格式: {fmt}")
+                    print(f"Fallback format: {fmt}")
                     break
         
         # 2. 设置分辨率
@@ -86,8 +86,8 @@ class CameraManager:
             self._set_manual_resolution()
 
         # 最终验证
-        print(f"视频格式: {self._get_fourcc()}")
-        print(f"最终分辨率: {self.width}x{self.height}")
+        print(f"Video Format: {self._get_fourcc()}")
+        print(f"Final resolution: {self.width}x{self.height}")
 
     def _try_set_format(self, fourcc):
         """尝试设置指定视频格式"""
@@ -115,13 +115,13 @@ class CameraManager:
             self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, w)
             self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, h)
             if self.width == w and self.height == h:
-                print(f"自动选择分辨率: {w}x{h}")
+                print(f"Automatically select resolution: {w}x{h}")
                 return
         
         # 保底设置
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-        print(f"使用默认分辨率: 640x480")
+        print(f"Use default resolution: 640x480")
 
     def _set_manual_resolution(self):
         """设置手动指定分辨率"""
@@ -132,7 +132,7 @@ class CameraManager:
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, target_h)
         
         if self.width != target_w or self.height != target_h:
-            print(f"警告: 无法设置 {target_w}x{target_h}，实际分辨率 {self.width}x{self.height}")
+            print(f"Warning: Unable to set {target_w}x{target_h}, actual resolution {self.width}x{self.height}")
 
     def _try_open_source(self, source, backend):
         """尝试打开视频源"""
@@ -147,7 +147,7 @@ class CameraManager:
         for i in range(0, 4):
             cap = cv2.VideoCapture(i, backend)
             if cap.isOpened():
-                print(f"自动检测到摄像头索引: {i}")
+                print(f"Automatically detected camera index: {i}")
                 return i
             cap.release()
         return None
