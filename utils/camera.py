@@ -8,7 +8,14 @@ class CameraManager:
         self.cap = None
         self._init_opencl()
         self._init_camera()
-        self._detect_best_settings()  # 新增自动检测逻辑
+        self._detect_best_settings()
+    
+    # 添加上下文管理器支持
+    def __enter__(self):
+        return self
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.release()
 
     def _init_opencl(self):
         """初始化OpenCL加速"""

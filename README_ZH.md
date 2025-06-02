@@ -25,7 +25,33 @@
 **目录结构示例**:  
 ```
 ~/myapp/main/_internal/mediapipe/modules$ tree
-...
+.
+├── face_detection
+│   ├── face_detection_full_range_cpu.binarypb
+│   ├── face_detection_full_range_sparse.tflite
+│   ├── face_detection_pb2.py
+│   ├── face_detection_short_range_cpu.binarypb
+│   └── face_detection_short_range.tflite
+├── face_geometry
+│   ├── data
+│   │   └── __init__.py
+│   ├── effect_renderer_calculator_pb2.py
+│   ├── env_generator_calculator_pb2.py
+│   ├── geometry_pipeline_calculator_pb2.py
+│   ├── __init__.py
+│   ├── libs
+│   │   └── __init__.py
+│   └── protos
+│       ├── environment_pb2.py
+│       ├── face_geometry_pb2.py
+│       ├── geometry_pipeline_metadata_pb2.py
+│       ├── __init__.py
+│       └── mesh_3d_pb2.py
+└── face_landmark
+    ├── face_landmark_front_cpu.binarypb
+    ├── face_landmark.tflite
+    ├── face_landmark_with_attention.tflite
+    └── __init__.py
 ```  
 
 ### Windows用户注意事项  
@@ -74,7 +100,7 @@ usage: main.py [-h] [--input INPUT] [--udp_ip UDP_IP] [--udp_port UDP_PORT] [--p
 ---  
 
 ## 快捷键  
-按下 `C` 键进行面部校准。  （你需要带上`--preview`才能够使用该快捷键）
+按下 `C` 键进行面部校准,`H`键进行头部校准  （你需要带上`--preview`才能够使用该快捷键）
 
 ---  
 

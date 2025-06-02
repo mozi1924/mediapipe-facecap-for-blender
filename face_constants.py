@@ -1,32 +1,59 @@
 # face_constants.py
 import json
-import cv2
-import math
 import numpy as np
 from pathlib import Path
 from config.settings import CONFIG
+import os
+import time
 
-# --------------------------
-# 全局配置
-# --------------------------
-def _load_calib(file_path):
-    """通用校准文件加载函数"""
-    try:
-        with open(file_path, 'r') as f:
-            return json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError, IOError):
-        return {}
+# 使用带时间戳的缓存
+_calib_cache = {"data": {}, "mtime": 0}
+_head_calib_cache = {"data": {}, "mtime": 0}
+
 def get_calib():
-    """实时获取面部校准数据"""
-    return _load_calib(CALIB_FILE)
+    """带智能缓存的面部校准数据"""
+    global _calib_cache
+    calib_file = Path(CALIB_FILE)
+    
+    # 检查文件是否存在并获取修改时间
+    current_mtime = calib_file.stat().st_mtime if calib_file.exists() else 0
+    
+    # 如果文件已修改或缓存为空，重新加载
+    if current_mtime > _calib_cache["mtime"] or not _calib_cache["data"]:
+        try:
+            with open(calib_file, 'r') as f:
+                _calib_cache["data"] = json.load(f)
+            _calib_cache["mtime"] = current_mtime
+        except (FileNotFoundError, json.JSONDecodeError):
+            _calib_cache["data"] = {}
+    
+    return _calib_cache["data"]
 
 def get_head_calib():
-    """实时获取头部校准数据"""
-    return _load_calib(HEAD_CALIB_FILE)
+    """带智能缓存的头部校准数据"""
+    global _head_calib_cache
+    calib_file = Path(HEAD_CALIB_FILE)
+    
+    # 检查文件是否存在并获取修改时间
+    current_mtime = calib_file.stat().st_mtime if calib_file.exists() else 0
+    
+    # 如果文件已修改或缓存为空，重新加载
+    if current_mtime > _head_calib_cache["mtime"] or not _head_calib_cache["data"]:
+        try:
+            with open(calib_file, 'r') as f:
+                _head_calib_cache["data"] = json.load(f)
+            _head_calib_cache["mtime"] = current_mtime
+        except (FileNotFoundError, json.JSONDecodeError):
+            _head_calib_cache["data"] = {}
+    
+    return _head_calib_cache["data"]
 
-# 加载面部和头部校准文件
+# 初始化路径
 CALIB_FILE = CONFIG['calibration']['file']
 HEAD_CALIB_FILE = CONFIG['head_calibration']['file']
+
+# 添加参考点常量
+REF_POINTS = CONFIG['calibration'].get('ref_points', [0, 1])
 # --------------------------
 # 面部关键点定义
 # --------------------------
